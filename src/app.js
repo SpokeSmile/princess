@@ -1,5 +1,6 @@
 import { story, puzzles } from './content.js';
 import { STORAGE_KEY, isCorrect, newGame, restoreGame } from './game.js';
+import { springTo, fade, reveal, reorderWithMotion, bindInteractions } from './motion.js';
 
 const main = document.querySelector('#main');
 const dialog = document.querySelector('#info-dialog');
@@ -18,16 +19,41 @@ const glyph = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* Необязательное сохранение. */ } }
 function focusMain() { window.scrollTo({ top: 0, behavior: 'instant' }); main.focus({ preventScroll: true }); }
 function changeView(view) { state.view = view; outcome = null; selected = ''; draft = ''; order = []; save(); render(); focusMain(); }
-function openDialog(content) { document.querySelector('#dialog-body').innerHTML = content; dialog.showModal(); }
+let dialogClosing = null;
+function openDialog(content) {
+  const surface = dialog.querySelector('.dialog-content');
+  const wasClosing = Boolean(dialogClosing);
+  const currentOpacity = Number(getComputedStyle(surface).opacity);
+  if (dialogClosing) { dialogClosing.cancel(); dialogClosing = null; }
+  document.querySelector('#dialog-body').innerHTML = content;
+  const wasOpen = dialog.open;
+  if (!wasOpen) dialog.showModal();
+  springTo(surface, { y: 0, scale: 1 }, wasOpen ? {} : { from: { y: 14, scale: .98 } });
+  if (!wasOpen || wasClosing) fade(surface, [{ opacity: wasOpen ? currentOpacity : 0 }, { opacity: 1 }]);
+}
+function closeDialog(immediate = false) {
+  if (dialogClosing && !immediate) return;
+  if (dialogClosing) { dialogClosing.cancel(); dialogClosing = null; }
+  if (immediate || !dialog.open) { dialog.close(); return; }
+  const surface = dialog.querySelector('.dialog-content');
+  springTo(surface, { y: 10, scale: .985 });
+  const closing = fade(surface, [{ opacity: 1 }, { opacity: 0 }], { duration: 130, fill: 'forwards' });
+  if (!closing) { dialog.close(); return; }
+  dialogClosing = closing;
+  closing.addEventListener('finish', () => {
+    if (dialogClosing !== closing) return;
+    dialog.close(); closing.cancel(); dialogClosing = null;
+  }, { once: true });
+}
 
 function envelopeArt() {
-  return `<div class="art-frame" aria-hidden="true"><div class="archive-art">
+  return `<div class="art-frame"><div class="archive-art">
     <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
-    <span class="art-coordinate">ХРАНИЛИЩЕ 01 / ПОЛКА 07</span>
-    <div class="back-note"><span class="tiny-label">ФРАГМЕНТ НЕИЗВЕСТНОГО ПИСЬМА</span><p>Некоторые вещи<br>проще зашифровать,<br><em>чем сказать вслух.</em></p><div class="handwritten">Кажется, это важно.</div><span class="note-lines"></span></div>
-    <div class="hero-envelope"><div class="envelope-fold"></div><div class="envelope-address"><span class="tiny-label">АДРЕСАТ</span><span class="address-line">Не установлен<span class="pencil-line"></span></span><span class="tiny-label envelope-sender">ОТПРАВИТЕЛЬ: НЕИЗВЕСТЕН</span></div><div class="postage-stamp"><span>БЮРО</span><svg viewBox="0 0 40 40"><path d="m20 5 3.8 10.7L35 20l-11.2 4.3L20 35l-3.8-10.7L5 20l11.2-4.3Z" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="currentColor"/></svg><span>ПИСЕМ · 01</span></div><div class="postmark"><span>НЕПОДПИСАННОЕ</span><strong>014</strong><span>ОСОБОЕ ДЕЛО</span></div><span class="envelope-bottom">ОТКРЫТЬ ПРИ ОБНАРУЖЕНИИ АДРЕСАТА</span></div>
-    <div class="case-tag"><span>ДЕЛО № ${story.caseNumber}</span><span class="tag-line"></span><strong>ЛИЧНО В РУКИ</strong></div>
-    <span class="art-caption"><span class="caption-line"></span> Одно письмо. Чья-то целая история.</span>
+    <span class="art-coordinate" aria-hidden="true">ХРАНИЛИЩЕ 01 / ПОЛКА 07</span>
+    <div class="back-note" aria-hidden="true"><span class="tiny-label">ФРАГМЕНТ НЕИЗВЕСТНОГО ПИСЬМА</span><p>Некоторые вещи<br>проще зашифровать,<br><em>чем сказать вслух.</em></p><div class="handwritten">Кажется, это важно.</div><span class="note-lines"></span></div>
+    <button type="button" class="hero-envelope" data-action="start" aria-label="Открыть дело: неподписанное письмо"><div class="envelope-fold"></div><div class="envelope-address"><span class="tiny-label">АДРЕСАТ</span><span class="address-line">Не установлен<span class="pencil-line"></span></span><span class="tiny-label envelope-sender">ОТПРАВИТЕЛЬ: НЕИЗВЕСТЕН</span></div><div class="postage-stamp"><span>БЮРО</span><svg viewBox="0 0 40 40"><path d="m20 5 3.8 10.7L35 20l-11.2 4.3L20 35l-3.8-10.7L5 20l11.2-4.3Z" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="currentColor"/></svg><span>ПИСЕМ · 01</span></div><div class="postmark"><span>НЕПОДПИСАННОЕ</span><strong>014</strong><span>ОСОБОЕ ДЕЛО</span></div><span class="envelope-bottom">ОТКРЫТЬ ПРИ ОБНАРУЖЕНИИ АДРЕСАТА</span></button>
+    <div class="case-tag" aria-hidden="true"><span>ДЕЛО № ${story.caseNumber}</span><span class="tag-line"></span><strong>ЛИЧНО В РУКИ</strong></div>
+    <span class="art-caption" aria-hidden="true"><span class="caption-line"></span> Нажми на конверт. История ждёт.</span>
   </div></div>`;
 }
 
@@ -36,7 +62,7 @@ function renderHome() {
   main.innerHTML = `<div class="home-view view-enter">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy"><div class="eyebrow"><span class="small-cross">✳</span> ИНТЕРАКТИВНОЕ РАССЛЕДОВАНИЕ <span class="edition">№ ${story.caseNumber}</span></div>
-        <h1 id="hero-title">Неподписанное<br><em>письмо.</em><span class="title-spark" aria-hidden="true">✳</span></h1>
+        <h1 id="hero-title">Письмо без<br><em>подписи.</em><span class="title-spark" aria-hidden="true">✳</span></h1>
         <p class="hero-description">В архиве найдено письмо без имени и адреса.<br class="desktop-break"> Четыре улики. Один отправитель.<br class="desktop-break"> И кое-что, что стоит прочитать до конца.</p>
         <div class="hero-actions"><button class="primary-button" data-action="start">${continued ? state.solved === puzzles.length ? 'Прочитать письмо' : 'Продолжить дело' : 'Открыть дело'} <span class="button-arrow" aria-hidden="true">↗</span></button><span class="time-note"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7" stroke="currentColor"/><path d="M10 6v4l3 2" stroke="currentColor"/></svg>15–20 минут<br><span>Никакой спешки</span></span></div>
         ${continued ? `<p class="resume-note">Дело сохранено: найдено ${state.solved} из ${puzzles.length} улик. <button class="text-button" data-action="restart">Начать заново</button></p>` : '<p class="hero-postscript">Понадобятся только любопытство и немного внимания.</p>'}
@@ -84,6 +110,7 @@ function render() {
   if (state.view === 'finale') renderFinale();
   else if (state.view === 'game') renderGame();
   else renderHome();
+  reveal(main.firstElementChild);
 }
 
 function completePuzzle(skipped = false) {
@@ -93,7 +120,7 @@ function completePuzzle(skipped = false) {
   state.solved = index + 1;
   outcome = { index, skipped };
   selected = ''; draft = ''; order = [];
-  save(); renderGame(); focusMain();
+  save(); renderGame(); reveal(document.querySelector('.discovery')); focusMain();
 }
 
 function notebookContent(index) {
@@ -133,33 +160,58 @@ document.addEventListener('click', event => {
     const newIndex = oldIndex + Number(target.dataset.direction);
     if (newIndex < 0 || newIndex >= order.length) return;
     [order[oldIndex], order[newIndex]] = [order[newIndex], order[oldIndex]];
-    const scrollPosition = window.scrollY;
-    renderGame();
-    const controls = [...document.querySelectorAll(`[data-fragment="${target.dataset.id}"] .move-button`)];
-    (controls.find(button => button.dataset.direction === target.dataset.direction && !button.disabled) || controls.find(button => !button.disabled))?.focus({ preventScroll: true });
-    window.scrollTo(0, scrollPosition);
+    const list = document.querySelector('.fragment-list');
+    reorderWithMotion(list, () => {
+      for (const id of order) list.append(list.querySelector(`[data-fragment="${id}"]`));
+      [...list.children].forEach((fragment, index) => {
+        fragment.querySelector('.fragment-index').textContent = `0${index + 1}`;
+        for (const button of fragment.querySelectorAll('.move-button')) {
+          const direction = Number(button.dataset.direction);
+          button.disabled = direction === -1 ? index === 0 : index === order.length - 1;
+          button.setAttribute('aria-label', `Переместить фрагмент ${index + 1} ${direction === -1 ? 'вверх' : 'вниз'}`);
+        }
+      });
+    });
+    const controls = [...target.closest('.fragment-controls').querySelectorAll('.move-button')];
+    (target.disabled ? controls.find(button => !button.disabled) : target)?.focus({ preventScroll: true });
+    document.querySelector('#form-error').hidden = true;
     document.querySelector('#order-announcement').textContent = `Фрагмент перемещён на позицию ${newIndex + 1}.`;
   }
   if (action === 'hint') {
     if (state.hints[state.solved] >= 3) return;
     state.hints[state.solved]++;
     save();
-    const scrollPosition = window.scrollY;
-    renderGame();
-    document.querySelector(state.hints[state.solved] === 3 ? '.skip-button' : '.hint-toggle').focus({ preventScroll: true });
-    window.scrollTo(0, scrollPosition);
+    const count = state.hints[state.solved];
+    const hint = document.createElement('p');
+    const number = document.createElement('span');
+    number.textContent = `0${count}`;
+    hint.append(number, document.createTextNode(puzzles[state.solved].hints[count - 1]));
+    document.querySelector('.hint-content').append(hint);
+    reveal(hint, 6);
+    target.innerHTML = `<span class="hint-bulb" aria-hidden="true">✧</span> ${count < 3 ? 'Ещё одна подсказка' : 'Все подсказки открыты'}<span class="hint-counter">${count} / 3</span>`;
+    if (count === 3) {
+      target.disabled = true;
+      const skip = document.createElement('button');
+      skip.className = 'text-link skip-button';
+      skip.dataset.action = 'skip';
+      skip.textContent = 'Открыть ответ и продолжить ↗';
+      document.querySelector('.hint-area').append(skip);
+      skip.focus({ preventScroll: true });
+    }
   }
   if (action === 'skip') completePuzzle(true);
   if (action === 'evidence') openDialog(notebookContent(Number(target.dataset.index)));
   if (action === 'notebook') openDialog(notebookContent());
-  if (action === 'close-dialog') dialog.close();
+  if (action === 'close-dialog') closeDialog();
   if (action === 'how') openDialog(`<span class="eyebrow">КОРОТКОЕ НАПУТСТВИЕ</span><h2 id="dialog-title">Смотри внимательнее.<br>Доверяй любопытству.</h2><ol class="how-list"><li><span>01</span><div><h3>Иди по следам</h3><p>Четыре загадки откроют четыре части истории. Читай документы и проверяй свои версии.</p></div></li><li><span>02</span><div><h3>Не бойся ошибаться</h3><p>Таймера нет. Попытки не заканчиваются. У каждой загадки есть три подсказки, а после них можно открыть ответ.</p></div></li><li><span>03</span><div><h3>Сохраняй находки</h3><p>Всё важное останется в папке дела. Прогресс сохраняется в этом браузере, если в нём разрешено хранение данных.</p></div></li></ol><button class="primary-button dialog-start" data-action="begin-from-dialog">${state.solved ? 'Продолжить расследование' : 'Открыть дело'}<span class="button-arrow" aria-hidden="true">↗</span></button>`);
   if (action === 'about') openDialog('<span class="eyebrow">БЮРО ПИСЕМ</span><h2 id="dialog-title">У каждого письма<br>есть своя история.</h2><p>Бюро писем — маленький интерактивный мир, где истории открываются через загадки, найденные записки и внимание к деталям.</p><p>Сейчас в архиве одно особое дело: письмо без подписи. Его история ждёт того, кто захочет прочитать до конца.</p><p class="dialog-caption">Для прохождения не нужны регистрация, специальные знания или идеальные ответы.</p>');
-  if (action === 'begin-from-dialog') { dialog.close(); changeView(state.solved === puzzles.length ? 'finale' : 'game'); }
+  if (action === 'begin-from-dialog') { closeDialog(true); changeView(state.solved === puzzles.length ? 'finale' : 'game'); }
   if (action === 'restart') openDialog('<span class="eyebrow">НАЧАТЬ С ЧИСТОГО ЛИСТА</span><h2 id="dialog-title">Открыть дело заново?</h2><p>Найденные улики и сохранённый прогресс в этом браузере будут сброшены.</p><div class="dialog-actions"><button class="primary-button" data-action="confirm-restart">Начать заново<span class="button-arrow" aria-hidden="true">↗</span></button><button class="text-link" data-action="close-dialog">Оставить как есть</button></div>');
-  if (action === 'confirm-restart') { state = newGame(); dialog.close(); changeView('game'); }
+  if (action === 'confirm-restart') { state = newGame(); closeDialog(true); changeView('game'); }
   if (action === 'accept') { const scrollPosition = window.scrollY; state.accepted = true; save(); renderFinale(); window.scrollTo(0, scrollPosition); document.querySelector('.accepted-note').setAttribute('tabindex', '-1'); document.querySelector('.accepted-note').focus({ preventScroll: true }); }
 });
 
-dialog.addEventListener('click', event => { if (event.target === dialog) { const bounds = dialog.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close(); } });
+dialog.addEventListener('click', event => { if (event.target === dialog) { const bounds = dialog.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) closeDialog(); } });
+dialog.addEventListener('cancel', event => { event.preventDefault(); closeDialog(); });
+bindInteractions();
 render();
