@@ -1,31 +1,17 @@
-import { story, puzzles } from './content.js';
+import { archive } from './content.js';
 
-export const STORAGE_KEY = 'bureau-letters:progress';
-
-export function normalizeAnswer(value) {
-  return String(value).normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/ё/g, 'е').replace(/[\s\p{P}\p{S}]+/gu, '');
+export const NOTES_KEY = 'tihorechye:notes:v1';
+export function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 }
-
-export function isCorrect(puzzle, value) {
-  if (puzzle.type === 'order') return Array.isArray(value) && value.join('|') === puzzle.answer.join('|');
-  const answers = puzzle.id === 'recipient' ? [...story.finalAnswers, story.nickname, story.recipient, `моя ${story.nickname}`] : [puzzle.answer];
-  return answers.some(answer => normalizeAnswer(answer) === normalizeAnswer(value));
+export function emptyState() {
+  return { case_id: archive.caseId, messages: [{ role: 'assistant', source: 'script', content: archive.opening }], evidence: [], solved: false, film_unlocked: false, film_solved: false, ai_configured: false, csrf_token: '' };
 }
-
-export function newGame() {
-  return { version: story.storyVersion, view: 'home', solved: 0, hints: [0, 0, 0, 0], skipped: [], accepted: false };
+export function safeMessages(messages) {
+  if (!Array.isArray(messages)) return emptyState().messages;
+  return messages.filter(message => message && ['user', 'assistant'].includes(message.role) && typeof message.content === 'string').map(message => ({ role: message.role, content: message.content, ...(['script', 'mistral'].includes(message.source) ? { source: message.source } : {}) }));
 }
-
-export function restoreGame(saved) {
-  const initial = newGame();
-  if (!saved || saved.version !== story.storyVersion || !Number.isInteger(saved.solved) || saved.solved < 0 || saved.solved > puzzles.length) return initial;
-  const solved = saved.solved;
-  return {
-    ...initial,
-    view: saved.view === 'home' ? 'home' : solved === puzzles.length ? 'finale' : 'game',
-    solved,
-    hints: puzzles.map((_, index) => Math.max(0, Math.min(3, Number(saved.hints?.[index]) || 0))),
-    skipped: Array.isArray(saved.skipped) ? [...new Set(saved.skipped.filter(value => Number.isInteger(value) && value >= 0 && value < solved))] : [],
-    accepted: solved === puzzles.length && saved.accepted === true
-  };
+export function validMessage(value) {
+  const message = String(value ?? '').trim();
+  return message.length > 0 && message.length <= 1500;
 }

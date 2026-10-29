@@ -1,24 +1,21 @@
-import { createServer } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { resolve, extname, sep } from 'node:path';
+import { join } from 'node:path';
 const root = fileURLToPath(new URL('../', import.meta.url));
+const python = join(root, 'backend', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+const manage = join(root, 'backend/manage.py');
 const args = process.argv.slice(2);
-const portArg = args.indexOf('--port');
-const port = Number(portArg >= 0 ? args[portArg + 1] : process.env.PORT || 4173);
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2' };
-const server = createServer(async (req, res) => {
-  try {
-    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    const target = resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);
-    if (!target.startsWith(root.endsWith(sep) ? root : root + sep) || pathname.split('/').some(segment => segment.startsWith('.')) || (pathname !== '/' && !pathname.startsWith('/src/') && !pathname.startsWith('/public/') && pathname !== '/index.html')) {
-      res.writeHead(404).end('Not found'); return;
-    }
-    if (!(await stat(target)).isFile()) { res.writeHead(404).end('Not found'); return; }
-    const body = await readFile(target);
-    res.writeHead(200, { 'Content-Type': types[extname(target)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
-    res.end(body);
-  } catch { res.writeHead(404).end('Not found'); }
+const portIndex = args.indexOf('--port');
+const port = Number(portIndex >= 0 ? args[portIndex + 1] : process.env.PORT || 4173);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) { console.error('Укажите свободный порт от 1024 до 65535.'); process.exit(1); }
+if (!existsSync(python)) { console.error('Сначала подготовьте Django по инструкции backend/README.md (виртуальное окружение и requirements.txt).'); process.exit(1); }
+const migrate = spawn(python, [manage, 'migrate', '--noinput'], { cwd: root, stdio: 'inherit' });
+migrate.on('error', error => { console.error(error.message); process.exitCode = 1; });
+migrate.on('exit', code => {
+  if (code !== 0) { process.exitCode = code || 1; return; }
+  const server = spawn(python, [manage, 'runserver', `127.0.0.1:${port}`, '--noreload'], { cwd: root, stdio: 'inherit' });
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.kill(signal));
+  server.on('error', error => { console.error(error.message); process.exitCode = 1; });
+  server.on('exit', status => { process.exitCode = status || 0; });
 });
-server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? `Порт ${port} занят. Запусти с --port 4174.` : error.message); process.exitCode = 1; });
-server.listen(port, '127.0.0.1', () => console.log(`Local: http://localhost:${port}/`));

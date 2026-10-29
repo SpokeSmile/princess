@@ -1,0 +1,16 @@
+[Unit]
+Description=Tihorechye mystery game
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/tihorechye/bureau/backend
+EnvironmentFile=/etc/tihorechye.env
+ExecStart=/srv/tihorechye/bureau/backend/.venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 2 --threads 2 --timeout 40 --access-logfile - --error-logfile -
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -1,35 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { puzzles, story } from '../src/content.js';
-import { isCorrect, normalizeAnswer, newGame, restoreGame } from '../src/game.js';
+import { readFile } from 'node:fs/promises';
+import { archive, evidence, cases, filmChallenge } from '../src/content.js';
+import { emptyState, safeMessages, validMessage, escapeHtml } from '../src/game.js';
 
-test('Логическая загадка имеет единственный ответ — бордовый конверт', () => {
-  const possible = ['red', 'blue', 'green'].filter(place => [place === 'blue', place !== 'blue', place !== 'red'].filter(Boolean).length === 1);
-  assert.deepEqual(possible, [puzzles[0].answer]);
+test('Открытые документы содержат обе восстанавливаемые улики', () => {
+  const alphabet = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
+  const code = evidence.find(item => item.id === 'envelope').code.match(/\d+/g).map(Number);
+  assert.equal(code.map(n => alphabet[n - 1]).join(''), 'МАКСИМ');
+  assert.equal(evidence.find(item => item.id === 'registry').lines.map(line => line[0]).join(''), 'КОТ');
 });
-test('Пароль действительно образован первыми буквами строк', () => {
-  assert.equal(normalizeAnswer(puzzles[1].document.lines.map(line => [...line][0]).join('')), puzzles[1].answer);
+test('Публичный сюжет не содержит ранних личных обращений или открытых ответов', () => {
+  const text = JSON.stringify({ archive, evidence, cases, filmChallenge });
+  assert.doesNotMatch(text, /Ксюша|Принцесса|Максим|И я тебя люблю|колготки|свидание/i);
+  assert.equal(cases.length, 3);
+  assert.equal(new Set(evidence.map(item => item.id)).size, evidence.length);
 });
-test('Ответы принимают пробелы, регистр, пунктуацию и варианты имени', () => {
-  assert.ok(isCorrect(puzzles[1], '  И С К Р А! '));
-  assert.ok(isCorrect(puzzles[3], 'КСЮША'));
-  assert.ok(isCorrect(puzzles[3], story.nickname));
-  assert.ok(isCorrect(puzzles[3], `моя ${story.nickname}`));
-  assert.equal(isCorrect(puzzles[1], 'архив'), false);
+test('Фильм показывается с точным названием и согласованным интервалом', () => {
+  assert.equal(filmChallenge.title, 'До встречи с тобой');
+  assert.equal(filmChallenge.time, '01:02:43–01:03:30');
 });
-test('Реконструкция принимает только полную правильную последовательность', () => {
-  assert.ok(isCorrect(puzzles[2], ['a', 'b', 'c', 'd']));
-  assert.equal(isCorrect(puzzles[2], ['c', 'a', 'd', 'b']), false);
-  assert.equal(isCorrect(puzzles[2], ['a', 'b', 'c']), false);
+test('Пользовательский текст и ответы ИИ безопасны для HTML-шаблонов', () => {
+  assert.equal(escapeHtml('<img onerror="alert(1)">&\''), '&lt;img onerror=&quot;alert(1)&quot;&gt;&amp;&#39;');
+  assert.equal(escapeHtml(null), '');
+  assert.deepEqual(safeMessages([{ role: 'system', content: 'private' }, null, { role: 'assistant', content: '<script>' }, { role: 'user', content: 1 }]), [{ role: 'assistant', content: '<script>' }]);
 });
-test('Повреждённое или устаревшее сохранение не открывает недоступные этапы', () => {
-  for (const saved of [null, {}, { version: 0, solved: 2 }, { version: story.storyVersion, solved: -1 }, { version: story.storyVersion, solved: 5 }, { version: story.storyVersion, solved: '4' }]) assert.deepEqual(restoreGame(saved), newGame());
-  assert.equal(restoreGame({ version: story.storyVersion, solved: 1, view: 'finale', accepted: true }).view, 'game');
+test('Без ответа сервера никакие этапы не считаются пройденными', () => {
+  const first = emptyState();
+  assert.equal(first.solved, false);
+  assert.equal(first.film_solved, false);
+  assert.equal(first.ai_configured, false);
+  first.evidence.push('letter');
+  assert.deepEqual(emptyState().evidence, []);
+  assert.equal(validMessage('   '), false);
+  assert.equal(validMessage('x'.repeat(1501)), false);
+  assert.equal(validMessage('Почему исчезло имя?'), true);
 });
-test('Законченное прохождение и найденные материалы сохраняются', () => {
-  const restored = restoreGame({ version: story.storyVersion, solved: 4, view: 'game', hints: [7, -1, 2, 0], skipped: [1, 1, 2, 6], accepted: true });
-  assert.equal(restored.view, 'finale');
-  assert.equal(restored.accepted, true);
-  assert.deepEqual(restored.hints, [3, 0, 2, 0]);
-  assert.deepEqual(restored.skipped, [1, 2]);
+test('Статический клиент не хранит ключ, готовую разгадку или старый финал', async () => {
+  const sources = await Promise.all(['app.js', 'content.js', 'game.js', 'api.js'].map(name => readFile(new URL(`../src/${name}`, import.meta.url), 'utf8')));
+  assert.doesNotMatch(sources.join('\n'), /Ксюша|Принцесса|И я тебя люблю|колготки|MISTRAL_API_KEY|api\.mistral\.ai/iu);
 });

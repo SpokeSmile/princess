@@ -106,10 +106,10 @@ export function bindInteractions(root = document) {
   root.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0) return;
     release(event);
-    const element = event.target.closest('.primary-button, .envelope-option, .move-button, .hero-envelope');
+    const element = event.target.closest('.primary-button, .case-card, .file-button, .tab-button, .evidence-card');
     if (!element || element.disabled) return;
     pressed.set(event.pointerId, element);
-    springTo(element, { scale: element.matches('.hero-envelope') ? .985 : .965 }, { stiffness: 700, damping: 53 });
+    springTo(element, { scale: .975 }, { stiffness: 700, damping: 53 });
   });
   root.addEventListener('pointerup', release);
   root.addEventListener('pointercancel', release);
@@ -117,18 +117,5 @@ export function bindInteractions(root = document) {
     for (const element of pressed.values()) springTo(element, { scale: 1 });
     pressed.clear();
   });
-  root.addEventListener('pointermove', event => {
-    if (event.pointerType !== 'mouse' || reducedMotion.matches) return;
-    const stage = event.target.closest('.art-frame');
-    if (!stage) return;
-    const bounds = stage.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width - .5;
-    const y = (event.clientY - bounds.top) / bounds.height - .5;
-    springTo(stage.querySelector('.hero-envelope'), { x: x * 10, y: y * 8, rotate: x * 3 });
-  });
-  root.addEventListener('pointerout', event => {
-    if (event.relatedTarget === null) release(event);
-    const stage = event.target.closest('.art-frame');
-    if (stage && !stage.contains(event.relatedTarget)) springTo(stage.querySelector('.hero-envelope'), { x: 0, y: 0, rotate: 0 });
-  });
+  root.addEventListener('pointerout', event => { if (event.relatedTarget === null) release(event); });
 }
