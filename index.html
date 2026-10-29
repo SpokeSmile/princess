@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f2e9" />
+    <meta name="description" content="В архиве найдено письмо без имени и адреса. Четыре улики, один отправитель. Откройте дело в Бюро писем." />
+    <title>Бюро писем — Неподписанное письмо</title>
+    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">К содержимому</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#" data-action="home" aria-label="Бюро писем — главная">
+          <svg class="brand-symbol" width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true"><rect x="4.5" y="9.5" width="27" height="20" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="m5 11 13 10 13-10M11 5h14" stroke="currentColor" stroke-width="1.5"/><path d="m5 29 9-10m17 10-9-10" stroke="currentColor" stroke-width="1.1"/></svg>
+          <span class="brand-name">бюро писем<span class="brand-caption">архив нерассказанных историй</span></span>
+        </a>
+        <nav class="header-nav" aria-label="Основная навигация">
+          <button class="nav-link" data-action="about">О бюро</button>
+          <button class="nav-link" data-action="how">Как играть <span aria-hidden="true">↗</span></button>
+        </nav>
+        <span class="archive-status"><i></i> Архив открыт</span>
+      </div>
+    </header>
+    <main id="main" tabindex="-1"></main>
+    <footer class="site-footer"><span>Бюро писем <span class="footer-divider">/</span> У каждой истории есть продолжение.</span><span class="footer-mark">СОХРАНЯЕМ ТО, ЧТО ВАЖНО <span aria-hidden="true">✳</span></span></footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title"><div class="dialog-content"><button class="icon-button dialog-close" data-action="close-dialog" aria-label="Закрыть">×</button><div id="dialog-body"></div></div></dialog>
+    <noscript><p class="noscript">Чтобы открыть дело, включи JavaScript в браузере.</p></noscript>
+  </body>
+</html>

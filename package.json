@@ -1,0 +1,13 @@
+{
+  "name": "bureau-of-letters",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Детективный квест с личным письмом в финале",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node --check src/app.js && node --check src/content.js && node --check src/game.js && node --check scripts/dev.mjs && node --test scripts/game.test.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
