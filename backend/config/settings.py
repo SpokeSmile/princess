@@ -47,7 +47,7 @@ if ON_VERCEL:
             ALLOWED_HOSTS.append(host)
             CSRF_TRUSTED_ORIGINS.append('https://' + host)
 ROOT_URLCONF = 'config.urls'
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = 'backend.config.wsgi.application' if ON_VERCEL else 'config.wsgi.application'
 INSTALLED_APPS = ['django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.staticfiles', 'quest']
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

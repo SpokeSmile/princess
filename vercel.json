@@ -5,11 +5,17 @@
   "functions": {
     "backend/config/wsgi.py": {
       "maxDuration": 40,
-      "includeFiles": "index.html"
+      "includeFiles": "{index.html,public/data/book-cipher.json}"
     }
   },
   "rewrites": [
-    { "source": "/src/:path*", "destination": "/static/site-src/:path*" },
-    { "source": "/public/:path*", "destination": "/static/site-public/:path*" }
+    {
+      "source": "/src/:path*",
+      "destination": "/static/site-src/:path*"
+    },
+    {
+      "source": "/public/:path*",
+      "destination": "/static/site-public/:path*"
+    }
   ]
 }
