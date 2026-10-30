@@ -9,3 +9,7 @@ backend/*.sqlite3*
 **/__pycache__/
 **/*.pyc
 w.txt
+backend/env.txt
+.env
+.env.*
+.vercel/
