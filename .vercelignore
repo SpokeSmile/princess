@@ -1,0 +1,11 @@
+.git/
+node_modules/
+dist/
+staticfiles/
+backend/.venv/
+backend/.env*
+backend/.local-secret
+backend/*.sqlite3*
+**/__pycache__/
+**/*.pyc
+w.txt

@@ -1,5 +1,7 @@
 let csrfToken = '';
-const stateRoutes = new Set(['/api/game/', '/api/evidence/', '/api/reset/']);
+let runId = '';
+export function setRunId(value) { runId = String(value || ''); }
+const stateRoutes = new Set(['/api/game/', '/api/evidence/', '/api/reset/', '/api/letter/']);
 export async function request(path, body) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 35000);
@@ -8,7 +10,7 @@ export async function request(path, body) {
       method: body === undefined ? 'GET' : 'POST',
       credentials: 'same-origin',
       headers: body === undefined ? { Accept: 'application/json' } : { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRFToken': csrfToken },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: JSON.stringify({ ...body, ...(runId ? { run_id: runId } : {}) }) }),
       signal: controller.signal
     });
     let data;

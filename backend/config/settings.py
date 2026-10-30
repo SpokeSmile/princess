@@ -2,13 +2,15 @@
 import os
 from pathlib import Path
 from secrets import token_urlsafe
+from .database import database_config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR.parent
 
 # Small .env reader: literal KEY=value entries only; no shell evaluation or interpolation.
+ON_VERCEL = os.getenv('VERCEL') == '1'
 env_file = BASE_DIR / '.env'
-if env_file.is_file():
+if not ON_VERCEL and env_file.is_file():
     for line in env_file.read_text(encoding='utf-8').splitlines():
         line = line.strip()
         if not line or line.startswith('#') or '=' not in line:
@@ -20,7 +22,7 @@ if env_file.is_file():
                 value = value[1:-1]
             os.environ.setdefault(name, value)
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() in ('1', 'true', 'yes')
+DEBUG = os.getenv('DJANGO_DEBUG', 'false' if ON_VERCEL else 'true').lower() in ('1', 'true', 'yes')
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '').strip()
 if not SECRET_KEY:
     if not DEBUG:
@@ -38,9 +40,15 @@ if not SECRET_KEY:
             SECRET_KEY = secret_file.read_text().strip()
 ALLOWED_HOSTS = [value.strip() for value in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,[::1]').split(',') if value.strip()]
 CSRF_TRUSTED_ORIGINS = [value.strip() for value in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if value.strip()]
+if ON_VERCEL:
+    for name in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+        host = os.getenv(name, '').strip()
+        if host and '/' not in host:
+            ALLOWED_HOSTS.append(host)
+            CSRF_TRUSTED_ORIGINS.append('https://' + host)
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
-INSTALLED_APPS = ['django.contrib.contenttypes', 'django.contrib.sessions', 'quest']
+INSTALLED_APPS = ['django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.staticfiles', 'quest']
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -48,7 +56,10 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3', 'OPTIONS': {'timeout': 20}}}
+DATABASES = {'default': database_config(os.getenv('DATABASE_URL', '').strip(), BASE_DIR, require_external=ON_VERCEL)}
+STATIC_URL = '/static/'
+STATIC_ROOT = FRONTEND_DIR / 'staticfiles'
+STATICFILES_DIRS = [('site-src', FRONTEND_DIR / 'src'), ('site-public', FRONTEND_DIR / 'public')]
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_NAME = 'archive_session'
 SESSION_COOKIE_HTTPONLY = True
@@ -72,9 +83,9 @@ LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_TZ = True
 DATA_UPLOAD_MAX_MEMORY_SIZE = 32768
-MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '').strip()
-MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-small-latest').strip()
-MISTRAL_TIMEOUT = min(max(float(os.getenv('MISTRAL_TIMEOUT', '25')), 3), 60)
-MISTRAL_MAX_TOKENS = 220
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '').strip()
+GROQ_MODEL = os.getenv('GROQ_MODEL', 'qwen/qwen3.8-27b').strip()
+GROQ_TIMEOUT = min(max(float(os.getenv('GROQ_TIMEOUT', '25')), 3), 60)
+GROQ_MAX_TOKENS = 220
 CHAT_COOLDOWN_SECONDS = 2
 CHAT_MAX_REQUESTS = 60

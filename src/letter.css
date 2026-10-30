@@ -1,0 +1,109 @@
+html.letter-finale {
+  color-scheme: light;
+  background: #fff1f6;
+  scrollbar-color: #dfb1c4 #fff1f6;
+}
+body.letter-finale {
+  min-height: 100%;
+  color: #684453;
+  background: radial-gradient(ellipse at 5% 0%, #f9dce8 0%, transparent 52%), radial-gradient(ellipse at 100% 90%, #f5d2e1 0%, transparent 55%), #fff1f6;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Arial, sans-serif;
+}
+body.letter-finale > .site-header,
+body.letter-finale > .site-footer,
+body.letter-finale > .skip-link,
+body.letter-finale > #toast { display: none !important; }
+body.letter-finale #main { overflow: visible; }
+.letter-finale ::selection { color: #63334c; background: #efc2d6; }
+.love-page {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 76px 24px 100px;
+  isolation: isolate;
+}
+.love-letter {
+  width: min(100%, 720px);
+  margin: 0;
+  padding: 62px 66px 55px;
+  border: 1px solid #fffafddd;
+  border-radius: 32px;
+  outline: none;
+  background: linear-gradient(145deg, #fffafbd9, #fff6f9d9);
+  box-shadow: 0 25px 85px #a4567510, 0 3px 15px #a4567508, inset 0 1px 0 #ffffffde;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  text-wrap: pretty;
+}
+.love-letter h1 {
+  margin: 0 0 32px;
+  color: #8e4c68;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
+  font-size: clamp(32px, 3.6vw, 43px);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -.045em;
+  text-transform: none;
+}
+.love-copy { font-size: 18px; line-height: 1.95; letter-spacing: -.012em; }
+.love-copy p { margin: 0 0 23px; }
+.love-copy p:first-child { color: #78475c; font-weight: 500; }
+.love-copy .love-confession { margin: 30px 0 0; color: #99516f; font-size: 20px; font-weight: 500; letter-spacing: -.025em; }
+.love-signature { margin: 35px 0 0; color: #a3657e; font: italic 23px/1.65 Georgia, serif; white-space: pre-line; }
+
+.love-home {
+  position: fixed;
+  z-index: 3;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  max-width: calc(100% - 32px);
+  padding: 11px 18px;
+  border: 1px solid #e8c7d6;
+  border-radius: 999px;
+  color: #8c526d;
+  background: #fff8fbeb;
+  box-shadow: 0 3px 16px #a4567509;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+}
+.love-home:hover { color: #71344f; background: #fffafb; border-color: #d5a1b9; }
+.love-home:focus-visible { outline: 2px solid #b37694; outline-offset: 4px; }
+
+/* A single warm wash of light joins the envelope to the final page. */
+.opening-flash { position: fixed; z-index: 20; inset: 0; opacity: 0; background: #fff5f9; pointer-events: none; }
+.letter-opening.is-revealing::backdrop { background: transparent; }
+.letter-opening.is-revealing .opening-close { visibility: hidden; }
+.letter-opening.is-flashed { background: #fff5f9; }
+.letter-opening.is-flashed .opening-body { visibility: hidden; }
+
+@media (max-width: 620px) {
+  .love-page { padding: 36px 16px 94px; }
+  .love-home { right: max(16px, env(safe-area-inset-right)); }
+  .love-letter { padding: 34px 26px 36px; border-radius: 26px; }
+  .love-letter h1 { margin-bottom: 26px; font-size: 34px; }
+  .love-copy { font-size: 16px; line-height: 1.95; letter-spacing: -.01em; }
+  .love-copy p { margin-bottom: 21px; }
+  .love-copy .love-confession { margin-top: 27px; font-size: 18px; }
+  .love-signature { margin-top: 29px; font-size: 21px; }
+}
+@media (max-width: 380px) {
+  .love-page { padding: 24px 12px 94px; }
+  .love-letter { padding-inline: 21px; border-radius: 23px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .love-letter { background: #fff7fa; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  body.letter-finale { color: #54313f; }
+  .love-letter { border-color: #c38ca4; background: #fff8fb; }
+  .love-letter h1, .love-copy .love-confession, .love-signature { color: #71344f; }
+}

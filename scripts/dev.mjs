@@ -14,7 +14,7 @@ const migrate = spawn(python, [manage, 'migrate', '--noinput'], { cwd: root, std
 migrate.on('error', error => { console.error(error.message); process.exitCode = 1; });
 migrate.on('exit', code => {
   if (code !== 0) { process.exitCode = code || 1; return; }
-  const server = spawn(python, [manage, 'runserver', `127.0.0.1:${port}`, '--noreload'], { cwd: root, stdio: 'inherit' });
+  const server = spawn(python, [manage, 'runserver', `127.0.0.1:${port}`], { cwd: root, stdio: 'inherit' });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.kill(signal));
   server.on('error', error => { console.error(error.message); process.exitCode = 1; });
   server.on('exit', status => { process.exitCode = status || 0; });

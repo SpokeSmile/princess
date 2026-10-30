@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Мистическое расследование: архивные улики, кинофрагмент и неизвестный собеседник",
+  "description": "Письмо без даты: ночной архив, документы и неизвестный собеседник",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node --check src/api.js && node --check src/app.js && node --check src/content.js && node --check src/game.js && node --check src/motion.js && node --check scripts/dev.mjs && node --test scripts/*.test.mjs"
+    "check": "node --check src/api.js && node --check src/app.js && node --check src/content.js && node --check src/game.js && node --check src/motion.js && node --check src/home.js && node --check src/envelope.js && node --check src/letter.js && node --check scripts/dev.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "django",
+  "buildCommand": "python manage.py migrate --noinput",
+  "functions": {
+    "backend/config/wsgi.py": {
+      "maxDuration": 40,
+      "includeFiles": "index.html"
+    }
+  },
+  "rewrites": [
+    { "source": "/src/:path*", "destination": "/static/site-src/:path*" },
+    { "source": "/public/:path*", "destination": "/static/site-public/:path*" }
+  ]
+}

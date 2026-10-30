@@ -4,24 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#101817" />
-  <meta name="description" content="Тихоречье, 1996. Мистические расследования онлайн: изучайте архив, находите улики и задавайте вопросы неизвестному отправителю." />
-  <title>Тихоречье, 1996 — мистические расследования</title>
+  <meta name="description" content="Тихоречье. Письмо без даты. Восстановите зашифрованную дату по документам ночного архива и откройте запечатанный конверт." />
+  <title>Тихоречье — мистические расследования</title>
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
   <link rel="preload" href="/public/fonts/oswald-variable.ttf" as="font" type="font/ttf" crossorigin />
   <link rel="stylesheet" href="/src/styles.css" />
+  <link rel="stylesheet" href="/src/case-ui.css" />
+  <link rel="stylesheet" href="/src/home.css" />
+  <link rel="stylesheet" href="/src/envelope.css" />
+  <link rel="stylesheet" href="/src/letter.css" />
   <script type="module" src="/src/app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">К содержимому</a>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="#" data-action="home" aria-label="Тихоречье, 1996 — главная"><span class="brand-symbol" aria-hidden="true">⌁</span><span>Тихоречье <b>1996</b></span></a>
-      <nav class="header-nav" aria-label="Навигация"><a href="#cases" data-action="section" data-target="cases">Расследования</a><a href="#how" data-action="section" data-target="how">Как играть</a><button data-action="about">Об архиве</button></nav>
+      <a class="brand" href="#" data-action="home" aria-label="Тихоречье — главная"><span class="brand-symbol" aria-hidden="true">⌁</span><span>Тихоречье <b>АРХИВ</b></span></a>
+      <nav class="header-nav" aria-label="Навигация"><a href="#cases" data-action="section" data-target="cases">Расследования</a><a href="#how" data-action="section" data-target="how">Как играть</a><a href="#faq" data-action="section" data-target="faq">Вопросы</a><button data-action="about">Об архиве</button></nav>
       <span class="header-label"><i></i> Ночная смена</span>
+      <span class="header-age">16+</span>
     </div>
   </header>
   <main id="main" tabindex="-1"></main>
-  <footer class="site-footer"><a href="#" data-action="home">ТИХОРЕЧЬЕ · 1996</a><span>Все персонажи и события вымышлены.</span><span>Архив открыт после полуночи.</span></footer>
+  <footer class="site-footer"><a href="#" data-action="home">ТИХОРЕЧЬЕ · НОЧНОЙ АРХИВ</a><span>Все персонажи и события вымышлены.</span><span>Архив открыт после полуночи.</span></footer>
   <dialog id="info-dialog" aria-labelledby="dialog-title"><div class="dialog-surface"><button class="dialog-close" data-action="close-dialog" aria-label="Закрыть окно">×</button><div id="dialog-body"></div></div></dialog>
   <div id="toast" class="toast" role="status" hidden></div>
   <noscript><p class="noscript">Для расследования нужно включить JavaScript.</p></noscript>
